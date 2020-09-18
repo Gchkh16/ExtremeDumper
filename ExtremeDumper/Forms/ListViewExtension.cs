@@ -1,10 +1,11 @@
 using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using static ExtremeDumper.Forms.NativeMethods;
+using static ExtremeDumper_Lib.Helper.NativeMethods;
 
 namespace ExtremeDumper.Forms {
-	internal static class ListViewExtesion {
+	internal static class ListViewExtension {
 		public static void AutoResizeColumns(this ListView listView, bool onlyLastColumn) {
 			if (listView is null)
 				throw new ArgumentNullException(nameof(listView));
@@ -39,5 +40,26 @@ namespace ExtremeDumper.Forms {
 
 			return listView.SelectedItems[0].SubItems[index];
 		}
+
+
+		[StructLayout(LayoutKind.Sequential)]
+		public unsafe struct SCROLLBARINFO {
+			public static readonly uint UnmanagedSize = (uint)Marshal.SizeOf(typeof(SCROLLBARINFO));
+			public static SCROLLBARINFO Default = new SCROLLBARINFO { cbSize = UnmanagedSize };
+
+			public uint cbSize;
+			public Rectangle rcScrollBar;
+			public int dxyLineButton;
+			public int xyThumbTop;
+			public int xyThumbBottom;
+			public int reserved;
+			public fixed uint rgstate[6];
+		}
+
+
+		[DllImport("user32.dll", BestFitMapping = false, CharSet = CharSet.Unicode, EntryPoint = "GetScrollBarInfo", ExactSpelling = true, SetLastError = true)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		public static extern bool GetScrollBarInfo(IntPtr hwnd, int idObject, ref SCROLLBARINFO psbi);
+
 	}
 }

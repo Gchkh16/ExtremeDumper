@@ -3,7 +3,7 @@ using System.Linq;
 using dnlib.PE;
 using dnlib.W32Resources;
 
-namespace ExtremeDumper.Dumping {
+namespace ExtremeDumper_Lib.Dumping {
 	internal static unsafe class Extensions {
 		public static string GetOriginalFilename(this IPEImage peImage) {
 			if (peImage is null)

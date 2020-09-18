@@ -7,7 +7,7 @@ using dnlib.DotNet;
 using dnlib.PE;
 using NativeSharp;
 
-namespace ExtremeDumper.Dumping {
+namespace ExtremeDumper_Lib.Dumping {
 	internal sealed unsafe class NormalDumper : IDumper {
 		private static readonly char[] InvalidFileNameChars = Path.GetInvalidFileNameChars();
 

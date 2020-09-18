@@ -8,41 +8,49 @@ using System.Reflection;
 using System.Resources;
 using System.Text;
 using System.Windows.Forms;
-using ExtremeDumper.Dumping;
+using ExtremeDumper.Helper;
+using ExtremeDumper_Lib;
+using ExtremeDumper_Lib.Dumping;
 using Microsoft.Diagnostics.Runtime;
 using NativeSharp;
-using static ExtremeDumper.Forms.NativeMethods;
+using static ExtremeDumper_Lib.Helper.NativeMethods;
 using ImageLayout = dnlib.PE.ImageLayout;
 
-namespace ExtremeDumper.Forms {
-	internal unsafe partial class ModulesForm : Form {
+namespace ExtremeDumper.Forms
+{
+	internal unsafe partial class ModulesForm : Form
+	{
 		private static readonly char[] InvalidFileNameChars = Path.GetInvalidFileNameChars();
 		private readonly NativeProcess _process;
-		private readonly bool _isDotNetProcess;
-		private readonly DumperTypeWrapper _dumperType;
+		private readonly ProcessInfo _processInfo;
+		private readonly DumperType _dumperType;
 		private readonly ResourceManager _resources = new ResourceManager(typeof(ModulesForm));
 
-		public ModulesForm(uint processId, string processName, bool isDotNetProcess, DumperTypeWrapper dumperType) {
+		public ModulesForm(ProcessInfo processInfo, DumperType dumperType)
+		{
 			InitializeComponent();
-			_process = NativeProcess.Open(processId);
+			_processInfo = processInfo;
+			_process = NativeProcess.Open(processInfo.Id);
 			if (_process == NativeProcess.InvalidProcess)
 				throw new InvalidOperationException();
-			_isDotNetProcess = isDotNetProcess;
 			_dumperType = dumperType;
-			Text = $"{_resources.GetString("StrModules")} {processName}(ID={processId})";
+			Text = $"{_resources.GetString("StrModules")} {processInfo.ModuleName}(ID={processInfo.Id})";
 			typeof(ListView).InvokeMember("DoubleBuffered", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty, null, lvwModules, new object[] { true });
-			lvwModules.ListViewItemSorter = new ListViewItemSorter(lvwModules, new List<TypeCode> { TypeCode.String, TypeCode.String, TypeCode.String, TypeCode.UInt64, TypeCode.Int32, TypeCode.String }) {
+			lvwModules.ListViewItemSorter = new ListViewItemSorter(lvwModules, new List<TypeCode> { TypeCode.String, TypeCode.String, TypeCode.String, TypeCode.UInt64, TypeCode.Int32, TypeCode.String })
+			{
 				AllowHexLeading = true
 			};
 			RefreshModuleList();
 		}
 
 		#region Events
-		private void lvwModules_Resize(object sender, EventArgs e) {
+		private void lvwModules_Resize(object sender, EventArgs e)
+		{
 			lvwModules.AutoResizeColumns(true);
 		}
 
-		private void mnuDumpModule_Click(object sender, EventArgs e) {
+		private void mnuDumpModule_Click(object sender, EventArgs e)
+		{
 			if (lvwModules.SelectedIndices.Count == 0)
 				return;
 
@@ -59,11 +67,13 @@ namespace ExtremeDumper.Forms {
 			DumpModule(moduleHandle, lvwModules.GetFirstSelectedSubItem(chModulePath.Index).Text == "InMemory" ? ImageLayout.File : ImageLayout.Memory, sfdlgDumped.FileName);
 		}
 
-		private void mnuRefreshModuleList_Click(object sender, EventArgs e) {
+		private void mnuRefreshModuleList_Click(object sender, EventArgs e)
+		{
 			RefreshModuleList();
 		}
 
-		private void mnuViewFunctions_Click(object sender, EventArgs e) {
+		private void mnuViewFunctions_Click(object sender, EventArgs e)
+		{
 			if (lvwModules.SelectedIndices.Count == 0)
 				return;
 
@@ -71,11 +81,13 @@ namespace ExtremeDumper.Forms {
 			functionsForm.Show();
 		}
 
-		private void mnuOnlyDotNetModule_Click(object sender, EventArgs e) {
+		private void mnuOnlyDotNetModule_Click(object sender, EventArgs e)
+		{
 			RefreshModuleList();
 		}
 
-		private void mnuGotoLocation_Click(object sender, EventArgs e) {
+		private void mnuGotoLocation_Click(object sender, EventArgs e)
+		{
 			if (lvwModules.SelectedIndices.Count == 0)
 				return;
 
@@ -85,95 +97,58 @@ namespace ExtremeDumper.Forms {
 		}
 		#endregion
 
-		private void RefreshModuleList() {
+		private void RefreshModuleList()
+		{
 			lvwModules.Items.Clear();
 			ListViewItem listViewItem;
-			if (!mnuOnlyDotNetModule.Checked) {
-				var moduleEntry32 = MODULEENTRY32.Default;
-				var snapshotHandle = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, _process.Id);
-				if (snapshotHandle == INVALID_HANDLE_VALUE)
-					return;
-				if (!Module32First(snapshotHandle, ref moduleEntry32))
-					return;
-				do {
-					listViewItem = new ListViewItem(moduleEntry32.szModule);
-					// Name
-					listViewItem.SubItems.Add(string.Empty);
-					// Domain Name
-					listViewItem.SubItems.Add(string.Empty);
-					// CLR Version
-					listViewItem.SubItems.Add("0x" + moduleEntry32.modBaseAddr.ToString(Cache.Is64BitProcess ? "X16" : "X8"));
-					// BaseAddress
-					listViewItem.SubItems.Add("0x" + moduleEntry32.modBaseSize.ToString("X8"));
-					// Size
-					listViewItem.SubItems.Add(moduleEntry32.szExePath);
-					// Path
-					lvwModules.Items.Add(listViewItem);
-				} while (Module32Next(snapshotHandle, ref moduleEntry32));
+
+			foreach (var moduleInfo in _processInfo.GetModules())
+			{
+				bool isClrModule = moduleInfo.IsClrModule(out var clrInfo);
+				if(!isClrModule && mnuOnlyDotNetModule.Checked) continue;
+				listViewItem = new ListViewItem(moduleInfo.Name);
+				listViewItem.SubItems.Add(isClrModule ? clrInfo.AppDomainName : string.Empty);
+				listViewItem.SubItems.Add(isClrModule ? clrInfo.ClrVersion : string.Empty);
+				listViewItem.SubItems.Add("0x" + moduleInfo.BaseAddress.ToString(Cache.Is64BitProcess ? "X16" : "X8"));
+				listViewItem.SubItems.Add("0x" + moduleInfo.BaseSize.ToString("X8"));
+				listViewItem.SubItems.Add(moduleInfo.FileName);
+				if (isClrModule) listViewItem.BackColor = Cache.DotNetColor;
 			}
-			if (_isDotNetProcess) {
-				try {
-					using (var dataTarget = DataTarget.AttachToProcess((int)_process.Id, 1000, AttachFlag.Passive)) {
-						foreach (var clrModule in dataTarget.ClrVersions.Select(t => t.CreateRuntime()).SelectMany(t => t.AppDomains).SelectMany(t => t.Modules)) {
-							string name = clrModule.Name;
-							bool inMemory;
-							if (!string.IsNullOrEmpty(name)) {
-								inMemory = name.Contains(",");
-							}
-							else {
-								name = "EmptyName";
-								inMemory = true;
-							}
-							string moduleName = !inMemory ? Path.GetFileName(name) : name.Split(',')[0];
-							listViewItem = new ListViewItem(moduleName);
-							// Name
-							listViewItem.SubItems.Add(string.Join(", ", clrModule.AppDomains.Select(t => t.Name)));
-							// Domain Name
-							listViewItem.SubItems.Add(clrModule.Runtime.ClrInfo.Version.ToString());
-							// CLR Version
-							listViewItem.SubItems.Add("0x" + clrModule.ImageBase.ToString(Cache.Is64BitProcess ? "X16" : "X8"));
-							// BaseAddress
-							listViewItem.SubItems.Add("0x" + clrModule.Size.ToString("X8"));
-							// Size
-							listViewItem.SubItems.Add(!inMemory ? name : "InMemory");
-							// Path
-							listViewItem.BackColor = Cache.DotNetColor;
-							lvwModules.Items.Add(listViewItem);
-						}
-					}
-				}
-				catch {
-					MessageBoxStub.Show(_resources.GetString("StrFailToGetDotNetModules"), MessageBoxIcon.Error);
-				}
-			}
+
 			lvwModules.AutoResizeColumns(false);
 		}
 
-		private static string EnsureValidFileName(string fileName) {
+		private static string EnsureValidFileName(string fileName)
+		{
 			if (string.IsNullOrEmpty(fileName))
 				return string.Empty;
 
 			var newFileName = new StringBuilder(fileName.Length);
-			foreach (char chr in fileName) {
+			foreach (char chr in fileName)
+			{
 				if (!InvalidFileNameChars.Contains(chr))
 					newFileName.Append(chr);
 			}
 			return newFileName.ToString();
 		}
 
-		private void DumpModule(IntPtr moduleHandle, ImageLayout imageLayout, string filePath) {
+		private void DumpModule(IntPtr moduleHandle, ImageLayout imageLayout, string filePath)
+		{
 			bool result;
-			using (var dumper = DumperFactory.GetDumper(_process.Id, _dumperType.Value))
+			using (var dumper = DumperFactory.GetDumper(_process.Id, _dumperType))
 				result = dumper.DumpModule(moduleHandle, imageLayout, filePath);
 			MessageBoxStub.Show(result ? $"{_resources.GetString("StrDumpModuleSuccessfully")}{Environment.NewLine}{filePath}" : _resources.GetString("StrFailToDumpModule"), result ? MessageBoxIcon.Information : MessageBoxIcon.Error);
 		}
 
-		private static string PathInsertPostfix(string path, string postfix) {
+		private static string PathInsertPostfix(string path, string postfix)
+		{
 			return Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path) + postfix + Path.GetExtension(path));
 		}
 
-		protected override void Dispose(bool disposing) {
-			if (disposing) {
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
 				components?.Dispose();
 				_process.Dispose();
 			}

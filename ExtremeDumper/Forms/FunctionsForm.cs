@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Resources;
 using System.Windows.Forms;
+using ExtremeDumper.Helper;
 using NativeSharp;
 
 namespace ExtremeDumper.Forms {

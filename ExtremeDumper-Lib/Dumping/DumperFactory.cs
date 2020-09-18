@@ -1,6 +1,6 @@
 using System;
 
-namespace ExtremeDumper.Dumping {
+namespace ExtremeDumper_Lib.Dumping {
 	public enum DumperType {
 		Normal
 	}

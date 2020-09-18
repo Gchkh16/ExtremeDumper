@@ -9,6 +9,9 @@
 		<PackageReference Include="NativeSharp-lib" Version="3.0.0.1" />
 	</ItemGroup>
 	<ItemGroup>
+	  <ProjectReference Include="..\ExtremeDumper-Lib\ExtremeDumper-Lib.csproj" />
+	</ItemGroup>
+	<ItemGroup>
 		<Compile Update="Forms\Resources.Designer.cs">
 			<DesignTime>True</DesignTime>
 			<AutoGen>True</AutoGen>

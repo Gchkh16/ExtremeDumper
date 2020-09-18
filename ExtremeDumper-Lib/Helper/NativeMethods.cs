@@ -1,9 +1,8 @@
 using System;
-using System.Drawing;
 using System.Runtime.InteropServices;
 
-namespace ExtremeDumper.Forms {
-	internal static class NativeMethods {
+namespace ExtremeDumper_Lib.Helper {
+	public static class NativeMethods {
 		public const uint TH32CS_SNAPMODULE = 0x00000008;
 
 		public const uint TH32CS_SNAPMODULE32 = 0x00000010;
@@ -31,20 +30,6 @@ namespace ExtremeDumper.Forms {
 			public string szExePath;
 		}
 
-		[StructLayout(LayoutKind.Sequential)]
-		public unsafe struct SCROLLBARINFO {
-			public static readonly uint UnmanagedSize = (uint)Marshal.SizeOf(typeof(SCROLLBARINFO));
-			public static SCROLLBARINFO Default = new SCROLLBARINFO { cbSize = UnmanagedSize };
-
-			public uint cbSize;
-			public Rectangle rcScrollBar;
-			public int dxyLineButton;
-			public int xyThumbTop;
-			public int xyThumbBottom;
-			public int reserved;
-			public fixed uint rgstate[6];
-		}
-
 		[DllImport("kernel32.dll", BestFitMapping = false, CharSet = CharSet.Unicode, EntryPoint = "CreateToolhelp32Snapshot", ExactSpelling = true, SetLastError = true)]
 		public static extern IntPtr CreateToolhelp32Snapshot(uint dwFlags, uint th32ProcessID);
 
@@ -56,8 +41,5 @@ namespace ExtremeDumper.Forms {
 		[return: MarshalAs(UnmanagedType.Bool)]
 		public static extern bool Module32Next(IntPtr hSnapshot, ref MODULEENTRY32 lppe);
 
-		[DllImport("user32.dll", BestFitMapping = false, CharSet = CharSet.Unicode, EntryPoint = "GetScrollBarInfo", ExactSpelling = true, SetLastError = true)]
-		[return: MarshalAs(UnmanagedType.Bool)]
-		public static extern bool GetScrollBarInfo(IntPtr hwnd, int idObject, ref SCROLLBARINFO psbi);
 	}
 }
