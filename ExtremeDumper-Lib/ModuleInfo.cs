@@ -1,8 +1,11 @@
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using dnlib.PE;
+using ExtremeDumper_Lib.Dumping;
 
 namespace ExtremeDumper_Lib
 {
@@ -12,6 +15,10 @@ namespace ExtremeDumper_Lib
 		public ulong BaseAddress { get; internal set; }
 		public ulong BaseSize { get; internal set; }
 		public string FileName { get; internal set; }
+
+		public uint ProcessId { get; internal set; }
+
+		public bool IsInMemoryModule { get; internal set; }
 
 		public bool IsClrModule(out ClrModuleInfo clrModuleInfo)
 		{
@@ -27,12 +34,19 @@ namespace ExtremeDumper_Lib
 			}
 		}
 
+		public void DumpModule(IntPtr moduleHandle, string filePath)
+		{
+			var layout = IsInMemoryModule ? ImageLayout.Memory : ImageLayout.File;
+			using (var dumper = DumperFactory.GetDumper(ProcessId, DumperType.Normal))
+				dumper.DumpModule(moduleHandle, layout, filePath);
+		}
+
 	}
 
 	public class ClrModuleInfo : ModuleInfo
 	{
 		public string AppDomainName { get; internal set; }
 		public string ClrVersion { get; internal set; }
-		public bool IsInMemoryModule { get; internal set; }
+
 	}
 }

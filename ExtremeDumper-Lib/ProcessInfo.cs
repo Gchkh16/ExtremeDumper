@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ExtremeDumper_Lib.Dumping;
 using ExtremeDumper_Lib.Helper;
 using Microsoft.Diagnostics.Runtime;
 
@@ -70,6 +71,16 @@ namespace ExtremeDumper_Lib
 
 					yield return module;
 				}
+			}
+		}
+
+		public void DumpProcess(string directoryPath)
+		{
+			if (!Directory.Exists(directoryPath))
+				Directory.CreateDirectory(directoryPath);
+			using (var dumper = DumperFactory.GetDumper(Id, DumperType.Normal))
+			{
+				dumper.DumpProcess(directoryPath);
 			}
 		}
 
