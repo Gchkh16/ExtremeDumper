@@ -2,14 +2,12 @@ using System;
 using System.Runtime.InteropServices;
 
 namespace ExtremeDumper_Lib.Helper {
-	public static class NativeMethods {
+	internal static class NativeMethods {
 		public const uint TH32CS_SNAPMODULE = 0x00000008;
 
 		public const uint TH32CS_SNAPMODULE32 = 0x00000010;
 
 		public static readonly IntPtr INVALID_HANDLE_VALUE = (IntPtr)(-1);
-
-		public const int OBJID_VSCROLL = unchecked((int)0xFFFFFFFB);
 
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 		public struct MODULEENTRY32 {

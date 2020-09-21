@@ -13,7 +13,6 @@ using ExtremeDumper_Lib;
 using ExtremeDumper_Lib.Dumping;
 using Microsoft.Diagnostics.Runtime;
 using NativeSharp;
-using static ExtremeDumper_Lib.Helper.NativeMethods;
 using ImageLayout = dnlib.PE.ImageLayout;
 
 namespace ExtremeDumper.Forms

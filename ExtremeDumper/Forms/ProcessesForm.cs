@@ -10,7 +10,6 @@ using ExtremeDumper.Helper;
 using ExtremeDumper_Lib;
 using ExtremeDumper_Lib.Dumping;
 using NativeSharp;
-using static ExtremeDumper_Lib.Helper.NativeMethods;
 
 namespace ExtremeDumper.Forms {
 	internal partial class ProcessesForm : Form {

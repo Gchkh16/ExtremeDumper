@@ -2,7 +2,6 @@ using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using static ExtremeDumper_Lib.Helper.NativeMethods;
 
 namespace ExtremeDumper.Forms {
 	internal static class ListViewExtension {
@@ -60,6 +59,8 @@ namespace ExtremeDumper.Forms {
 		[DllImport("user32.dll", BestFitMapping = false, CharSet = CharSet.Unicode, EntryPoint = "GetScrollBarInfo", ExactSpelling = true, SetLastError = true)]
 		[return: MarshalAs(UnmanagedType.Bool)]
 		public static extern bool GetScrollBarInfo(IntPtr hwnd, int idObject, ref SCROLLBARINFO psbi);
+
+		public const int OBJID_VSCROLL = unchecked((int)0xFFFFFFFB);
 
 	}
 }

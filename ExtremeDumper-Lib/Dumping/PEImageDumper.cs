@@ -4,7 +4,7 @@ using dnlib.PE;
 using NativeSharp;
 
 namespace ExtremeDumper_Lib.Dumping {
-	public static unsafe class PEImageDumper {
+	internal static unsafe class PEImageDumper {
 		/// <summary>
 		/// 直接从内存中复制模块，不执行格式转换操作
 		/// </summary>
