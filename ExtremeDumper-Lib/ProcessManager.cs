@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using NativeSharp;
@@ -6,6 +7,11 @@ using static ExtremeDumper_Lib.Helper.NativeMethods;
 namespace ExtremeDumper_Lib {
 	public class ProcessManager
 	{
+		static ProcessManager() 
+		{
+			Environment.SetEnvironmentVariable("_NT_SYMBOL_PATH", string.Empty);
+		}
+
 		public static List<ProcessInfo> GetRunningProcesses()
 		{
 			var processIds = NativeProcess.GetAllProcessIds();

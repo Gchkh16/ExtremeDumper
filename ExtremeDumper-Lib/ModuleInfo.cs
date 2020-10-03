@@ -30,15 +30,15 @@ namespace ExtremeDumper_Lib
 			else
 			{
 				clrModuleInfo = null;
-				return true;
+				return false;
 			}
 		}
 
-		public void DumpModule(IntPtr moduleHandle, string filePath)
+		public virtual void DumpModule(string filePath)
 		{
-			var layout = IsInMemoryModule ? ImageLayout.Memory : ImageLayout.File;
+			var layout = IsInMemoryModule ? ImageLayout.File : ImageLayout.Memory;
 			using (var dumper = DumperFactory.GetDumper(ProcessId, DumperType.Normal))
-				dumper.DumpModule(moduleHandle, layout, filePath);
+				dumper.DumpModule((IntPtr)BaseAddress, layout, filePath);
 		}
 
 	}
@@ -48,5 +48,11 @@ namespace ExtremeDumper_Lib
 		public string AppDomainName { get; internal set; }
 		public string ClrVersion { get; internal set; }
 
+		//public override void DumpModule(string filePath)
+		//{
+		//	var layout = IsInMemoryModule ? ImageLayout.Memory : ImageLayout.File;
+		//	using(var dumper = DumperFactory.GetDumper(ProcessId, DumperType.Normal))
+		//		dumper.
+		//}
 	}
 }

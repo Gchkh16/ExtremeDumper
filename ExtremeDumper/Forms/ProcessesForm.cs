@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Resources;
 using System.Security.Principal;
@@ -17,6 +18,7 @@ namespace ExtremeDumper.Forms {
 		private DumperType _dumperType = DumperType.Normal;
 		private readonly ResourceManager _resources = new ResourceManager(typeof(ProcessesForm));
 		private List<ProcessInfo> _processes;
+		private IEnumerable<ProcessInfo> _filteredProcesses;
 		private static bool _hasSeDebugPrivilege;
 
 		public ProcessesForm() {
@@ -83,11 +85,12 @@ namespace ExtremeDumper.Forms {
 			
 
 			var processNameItem = lvwProcesses.GetFirstSelectedSubItem(chProcessName.Index);
+			var processId = lvwProcesses.GetFirstSelectedSubItem(chProcessId.Index).Text;
 			if (Environment.Is64BitProcess && processNameItem.BackColor == Cache.DotNetColor && processNameItem.Text.EndsWith(_resources.GetString("Str32Bit"), StringComparison.Ordinal)) {
 				MessageBoxStub.Show(_resources.GetString("StrViewModulesSwitchTo32Bit"), MessageBoxIcon.Error);
 			}
 			else {
-				var modulesForm = new ModulesForm(_processes[lvwProcesses.SelectedIndices[0]], _dumperType);
+				var modulesForm = new ModulesForm(_processes.Find(p => p.Id.ToString() == processId), _dumperType);
 				modulesForm.Show();
 			}
 		}
@@ -129,8 +132,10 @@ namespace ExtremeDumper.Forms {
 
 			_processes = ProcessManager.GetRunningProcesses();
 
+			_filteredProcesses = mnuOnlyDotNetProcess.Checked ? _processes.Where(p => p.IsDotNetProcess) : _processes;
 
-			foreach (var processInfo in _processes)
+
+			foreach (var processInfo in _filteredProcesses)
 			{
 				var listViewItem = new ListViewItem(processInfo.ModuleName);
 				listViewItem.SubItems.Add(processInfo.Id.ToString());
@@ -142,25 +147,6 @@ namespace ExtremeDumper.Forms {
 			lvwProcesses.AutoResizeColumns(false);
 		}
 
-		private static bool Is64BitPE(string filePath, out bool is64) {
-			try {
-				using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-				using (var reader = new BinaryReader(stream)) {
-					reader.BaseStream.Position = 0x3C;
-					uint peOffset = reader.ReadUInt32();
-					reader.BaseStream.Position = peOffset + 0x4;
-					ushort machine = reader.ReadUInt16();
-					if (machine != 0x14C && machine != 0x8664)
-						throw new InvalidDataException();
-					is64 = machine == 0x8664;
-				}
-				return true;
-			}
-			catch {
-				is64 = false;
-				return false;
-			}
-		}
 
 		private void DumpProcess(uint processId, string directoryPath) {
 			if (!Directory.Exists(directoryPath))

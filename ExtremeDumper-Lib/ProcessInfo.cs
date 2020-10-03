@@ -60,6 +60,7 @@ namespace ExtremeDumper_Lib
 
 					var module = new ClrModuleInfo
 					{
+						ProcessId = Id,
 						Name = moduleName,
 						AppDomainName = string.Join(", ", clrModule.AppDomains.Select(t => t.Name)),
 						ClrVersion = clrModule.Runtime.ClrInfo.Version.ToString(),

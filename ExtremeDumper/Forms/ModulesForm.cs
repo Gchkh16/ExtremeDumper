@@ -99,19 +99,19 @@ namespace ExtremeDumper.Forms
 		private void RefreshModuleList()
 		{
 			lvwModules.Items.Clear();
-			ListViewItem listViewItem;
 
 			foreach (var moduleInfo in _processInfo.GetModules())
 			{
 				bool isClrModule = moduleInfo.IsClrModule(out var clrInfo);
 				if(!isClrModule && mnuOnlyDotNetModule.Checked) continue;
-				listViewItem = new ListViewItem(moduleInfo.Name);
+				var listViewItem = new ListViewItem(moduleInfo.Name);
 				listViewItem.SubItems.Add(isClrModule ? clrInfo.AppDomainName : string.Empty);
 				listViewItem.SubItems.Add(isClrModule ? clrInfo.ClrVersion : string.Empty);
 				listViewItem.SubItems.Add("0x" + moduleInfo.BaseAddress.ToString(Cache.Is64BitProcess ? "X16" : "X8"));
 				listViewItem.SubItems.Add("0x" + moduleInfo.BaseSize.ToString("X8"));
 				listViewItem.SubItems.Add(moduleInfo.FileName);
 				if (isClrModule) listViewItem.BackColor = Cache.DotNetColor;
+				lvwModules.Items.Add(listViewItem);
 			}
 
 			lvwModules.AutoResizeColumns(false);
@@ -135,7 +135,7 @@ namespace ExtremeDumper.Forms
 		{
 			bool result;
 			using (var dumper = DumperFactory.GetDumper(_process.Id, _dumperType))
-				result = dumper.DumpModule(moduleHandle, imageLayout, filePath);
+				result = dumper.TyDumpModule(moduleHandle, imageLayout, filePath);
 			MessageBoxStub.Show(result ? $"{_resources.GetString("StrDumpModuleSuccessfully")}{Environment.NewLine}{filePath}" : _resources.GetString("StrFailToDumpModule"), result ? MessageBoxIcon.Information : MessageBoxIcon.Error);
 		}
 

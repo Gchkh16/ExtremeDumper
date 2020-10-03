@@ -1,6 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 	<PropertyGroup>
 		<PlatformTarget>x86</PlatformTarget>
+		<Platforms>AnyCPU;x64</Platforms>
+		<StartupObject>ExtremeDumper_x86.Program</StartupObject>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
 	</PropertyGroup>
 	<Import Project="..\ExtremeDumper.Common.props" />
 </Project>
